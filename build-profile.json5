@@ -1,0 +1,66 @@
+{
+  "app": {
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "compatibleSdkVersion": "5.0.1(13)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "useNormalizedOHMUrl": true   // 👈 加这一行
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug"
+      },
+      {
+        "name": "release"
+      }
+    ],
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "storeFile": "/Users/wang/Documents/hos/key.p12",
+          "storePassword": "00000018E422DE8C2E40CA1B890377DAFCECC69A6615D26DD3D3032629463737CDDBC933A8A66C4D",
+          "keyAlias": "release",
+          "keyPassword": "0000001808FF5EE97A6885C491891C5572AAF1F4B49855384BFF9E8579D311DC5D67173CAE940B52",
+          "signAlg": "SHA256withECDSA",
+          "profile": "/Users/wang/Documents/hos/wwz调试Debug.p7b",
+          "certpath": "/Users/wang/Documents/hos/lefu调试证书.cer"
+        }
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+//    {
+//      "name": "ppsdkkit",
+//      "srcPath": "./ppsdkkit",
+//      "targets": [
+//        {
+//          "name": "default",
+//          "applyToProducts": [
+//            "default"
+//          ]
+//        }
+//      ]
+//    }
+  ]
+}

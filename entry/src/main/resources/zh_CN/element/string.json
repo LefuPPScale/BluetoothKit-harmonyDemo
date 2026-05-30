@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "PPBTKitDemo"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "需要开启蓝牙权限后使用相关功能"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "PPBTKitDemo"
+    }
+  ]
+}

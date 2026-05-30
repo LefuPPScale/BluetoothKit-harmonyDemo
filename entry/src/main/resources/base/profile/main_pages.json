@@ -1,0 +1,19 @@
+{
+  "src": [
+    "pages/Index",
+    "ppble/ble/search/SearchDeviceList",
+    "ppble/device/apple/PPDeviceApplePage",
+    "ppble/device/torre/PPDeviceTorrePage",
+    "ppble/device/coconut/PPDeviceCoconutPage",
+    "ppble/device/banana/PPDeviceBananaPage",
+    "ppble/device/jambul/PPDeviceJambulPage",
+    "ppble/device/borre/PPDeviceBorrePage",
+    "ppble/device/hamburger/PPDeviceHamburgerPage",
+    "ppble/device/fish/PPDeviceFishPage",
+    "ppble/device/grapes/PPDeviceGrapesPage",
+    "ppble/device/egg/PPDeviceEggPage",
+    "ppble/device/ice/PPDeviceIcePage",
+    "ppble/wifi/WifiListPager",
+    "ppble/wifi/ConfigWifiPager"
+  ]
+}
