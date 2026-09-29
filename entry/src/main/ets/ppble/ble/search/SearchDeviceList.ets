@@ -1,6 +1,39 @@
 import { router } from '@kit.ArkUI';
-import { PPBleSearch, PPBluetoothKit, PPLogger, PPDeviceModel, PPDevicePeripheralType } from 'ppsdkkit';
+import {
+  PPBleSearch,
+  PPBluetoothKit,
+  PPLogger,
+  PPDeviceModel,
+  PPDevicePeripheralType,
+  PPDeviceCalculateType,
+  PPScaleHelper
+} from 'ppsdkkit';
 import { access } from '@kit.ConnectivityKit';
+
+// These fields are optional extensions returned by some device payloads. They are
+// intentionally kept local because older ppsdkkit versions do not declare them
+// on PPDeviceModel yet.
+interface DeviceNetworkPropertiesJson {
+  needAuth?: boolean;
+  httpType?: number;
+  isSupportADN?: boolean;
+}
+
+@Extend(Text)
+function deviceInfoText() {
+  .fontSize(12)
+  .fontColor('#FFFFFF')
+  .maxLines(2)
+  .textOverflow({ overflow: TextOverflow.Ellipsis })
+}
+
+@Extend(Text)
+function sectionTitle() {
+  .fontSize(14)
+  .fontWeight(FontWeight.Bold)
+  .fontColor('#000000')
+  .width('100%')
+}
 
 @Entry
 @Component
@@ -66,7 +99,7 @@ struct SearchDeviceList {
       // 设备列表区域
       Column() {
         if (this.deviceModels.length > 0) {
-          List() {
+          List({ space: 12 }) {
             ForEach(this.deviceModels, (device: PPDeviceModel, index: number) => {
               ListItem() {
                 deviceItem({
@@ -80,24 +113,22 @@ struct SearchDeviceList {
           .scrollBar(BarState.Off)
           .width('100%')
           .height('100%')
-          .divider({
-            strokeWidth: 1,
-            color: '#f0f0f0',
-            startMargin: 10,
-            endMargin: 10
-          })
         } else {
           Column() {
-            Text(this.scanSwitch ? '扫描中...' : '暂无设备发现')
+            Text(this.scanSwitch ? '正在扫描设备…' : '暂无设备发现')
               .fontSize(16)
-              .fontColor('#999999')
+              .fontWeight(FontWeight.Medium)
+              .fontColor('#64748B')
+            Text(this.scanSwitch ? '请保持设备靠近并开启蓝牙' : '开启扫描后，附近设备会显示在这里')
+              .fontSize(13)
+              .fontColor('#9AA4B2')
+              .margin({ top: 8 })
           }
           .width('100%')
           .height('100%')
           .justifyContent(FlexAlign.Center)
         }
       }
-      .cardStyle()
       .layoutWeight(1)
       .width('100%')
       .margin({ top: 10 })
@@ -288,40 +319,135 @@ struct deviceItem {
   itemClick?: (device: PPDeviceModel) => void
 
   build() {
-    Column({ space: 5 }) {
+    Column({ space: 4 }) {
+      Text('Add Devices To The Platform')
+        .sectionTitle()
 
-      Text(`Name:${this.device?.deviceName}`)
-        .fontSize(14)
-        .fontWeight(FontWeight.Medium)
+      Column({ space: 4 }) {
+        Row(){
+          Text(`DeviceName: ${this.device?.deviceName || '--'}`)
+            .deviceInfoText()
+          Text('')
+        }.width('100%') // Row撑满整行宽度
+        .justifyContent(FlexAlign.Start) // 子元素【水平靠左】
+
+        Row() {
+          Text(`AdvLength: ${this.device?.advLength ?? 0}`)
+            .deviceInfoText()
+            .layoutWeight(1)
+          Text(`Sign: ${this.device?.sign || '--'}`)
+            .deviceInfoText()
+            .layoutWeight(1)
+            .textAlign(TextAlign.End)
+        }
         .width('100%')
+        .justifyContent(FlexAlign.SpaceBetween)
+      }
+      .deviceInfoPanel()
 
-      Row() {
-        Text(`Mac:${this.device?.deviceMac}`)
-          .fontSize(12)
-          .fontColor('#666666')
-          .width('100%')
+      Text('Basic Attributes')
+        .sectionTitle()
 
-
-      }.width(`100%`)
-
-      Row() {
-        Text(`advLength:${this.device?.advLength}`)
-          .fontSize(12)
-          .fontColor('#666666')
-          .width('50%')
-
-        Text(`sign:${this.device?.sign}`)
-          .fontSize(12)
-          .fontColor('#666666')
-          .width('50%')
-
-      }.width('100%')
-
-      Text(`PeripheralType:${PPDevicePeripheralType[this.device?.getDevicePeripheralType()??0]}`)
-        .fontSize(12)
-        .fontColor('#666666')
+      Column({ space: 4 }) {
+        Row() {
+          Text(`MAC: ${this.device?.deviceMac || '--'}`)
+            .deviceInfoText()
+            .layoutWeight(1)
+          Text(`RSSI: ${this.device?.rssi ?? 0}db`)
+            .deviceInfoText()
+            .layoutWeight(1)
+            .textAlign(TextAlign.End)
+        }
         .width('100%')
+        .justifyContent(FlexAlign.SpaceBetween)
 
+        Row(){
+          Text(`PeripheralType: ${this.getPeripheralType()}`)
+            .deviceInfoText()
+          Text('')
+        }.width('100%') // Row撑满整行宽度
+        .justifyContent(FlexAlign.Start) // 子元素【水平靠左】
+
+        Row(){
+          Text(`NeedAuth: ${this.getNeedAuthText()}`)
+            .deviceInfoText()
+          Text('')
+        }.width('100%') // Row撑满整行宽度
+        .justifyContent(FlexAlign.Start) // 子元素【水平靠左】
+      }
+      .deviceInfoPanel()
+
+      if (PPScaleHelper.isFuncTypeWifi(this.device?.deviceFuncType)) {
+        Text('Distribution Networks')
+          .sectionTitle()
+
+        Column({ space: 4 }) {
+
+          Row(){
+            Text(`WifiProtocolType: ${this.getWifiProtocolType()}`)
+              .deviceInfoText()
+            Text('')
+          }.width('100%') // Row撑满整行宽度
+          .justifyContent(FlexAlign.Start) // 子元素【水平靠左】
+
+          Row(){
+            Text(`HttpScheme: ${this.getHttpScheme()}`)
+              .deviceInfoText()
+            Text('')
+          }.width('100%') // Row撑满整行宽度
+          .justifyContent(FlexAlign.Start) // 子元素【水平靠左】
+
+          Row(){
+            Text(`SupportADN: ${this.getSupportAdnText()}`)
+              .deviceInfoText()
+            Text('')
+          }.width('100%') // Row撑满整行宽度
+          .justifyContent(FlexAlign.Start) // 子元素【水平靠左】
+
+
+
+
+        }
+        .deviceInfoPanel()
+      }
+
+      if (this.shouldShowComputingLibrary()) {
+        Text('Computing Library')
+          .sectionTitle()
+
+        Column({ space: 4 }) {
+
+          Row(){
+            Text(`CalculateType: ${this.getCalculateType()}`)
+              .deviceInfoText()
+            Text('')
+          }.width('100%') // Row撑满整行宽度
+          .justifyContent(FlexAlign.Start) // 子元素【水平靠左】
+
+
+          Row(){
+              Text(`CalculateAPI: ${this.getCalculateAPI()}`)
+              .deviceInfoText()
+            Text('')
+          }.width('100%') // Row撑满整行宽度
+          .justifyContent(FlexAlign.Start) // 子元素【水平靠左】
+
+
+          if (this.getProduct() >= 0) {
+            Row(){
+              Text(`Product: ${this.getProduct()}`)
+                .deviceInfoText()
+              Text('')
+            }.width('100%') // Row撑满整行宽度
+            .justifyContent(FlexAlign.Start) // 子元素【水平靠左】
+          }
+
+
+
+
+        }
+        .deviceInfoPanel()
+      }
     }
     .onClick(() => {
       if (this.device) {
@@ -329,9 +455,121 @@ struct deviceItem {
       }
     })
     .width('100%')
-    .padding(10)
-    .backgroundColor('#ffffff')
-    .borderRadius(8)
+    .padding(20)
+    .backgroundColor('#FFFFFF')
+    .borderRadius(16)
+  }
+
+  @Styles
+  deviceInfoPanel() {
+    .width('100%')
+    .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+    .backgroundColor('#999999')
+    .borderRadius(6)
+  }
+
+  private getPeripheralType(): string {
+    const type = this.device?.getDevicePeripheralType() ?? 0;
+    return `${PPDevicePeripheralType[type] || 'Unknown'}`;
+  }
+
+  private getWifiProtocolType(): string {
+    switch (this.device?.getDevicePeripheralType()) {
+      case PPDevicePeripheralType.PeripheralApple:
+      case PPDevicePeripheralType.PeripheralCoconut:
+        return 'V2.0/V3.0 Protocol';
+      case PPDevicePeripheralType.PeripheralIce:
+      case PPDevicePeripheralType.PeripheralTorre:
+      case PPDevicePeripheralType.PeripheralBorre:
+      case PPDevicePeripheralType.PeripheralDorre:
+        return 'Torre/V4.0 Protocol';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  /**
+   * Read optional network properties from the model's JSON representation.
+   * This keeps the UI compatible with SDK versions that do not expose these
+   * properties in the PPDeviceModel declaration.
+   */
+  private getNetworkProperties(): DeviceNetworkPropertiesJson {
+    if (!this.device) {
+      return {};
+    }
+    try {
+      return JSON.parse(JSON.stringify(this.device)) as DeviceNetworkPropertiesJson;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  private getNeedAuthText(): string {
+    return this.getNetworkProperties().needAuth ? 'Need' : 'No Need';
+  }
+
+  private getHttpScheme(): string {
+    return this.getNetworkProperties().httpType === 1 ? 'https' : 'http';
+  }
+
+  private getSupportAdnText(): string {
+    return this.getNetworkProperties().isSupportADN ? 'Yes' : 'No';
+  }
+
+  private getCalculateType(): string {
+    const calculateType = this.device?.deviceCalculateType ?? 0;
+    return `${PPDeviceCalculateType[calculateType] || 'Unknown'}`;
+  }
+
+  private getCalculateAPI(): string {
+    switch (this.device?.deviceCalculateType) {
+      case PPDeviceCalculateType.PPDeviceCalculateTypeDirect:
+        return 'DC Four-Electrode Algorithm v2.0';
+      case PPDeviceCalculateType.PPDeviceCalculateTypeAlternate:
+      case PPDeviceCalculateType.PPDeviceCalculateTypeNormal:
+      case PPDeviceCalculateType.PPDeviceCalculateTypeAlternate4_0:
+        return 'AC Four-Electrode Algorithm';
+      case PPDeviceCalculateType.PPDeviceCalculateTypeAlternate4_1:
+        return 'Dual-Frequency AC Four-Electrode Algorithm';
+      case PPDeviceCalculateType.PPDeviceCalculateTypeAlternate8:
+      case PPDeviceCalculateType.PPDeviceCalculateTypeAlternate8_0:
+      case PPDeviceCalculateType.PPDeviceCalculateTypeAlternate8_1:
+      case PPDeviceCalculateType.PPDeviceCalculateTypeAlternate8_2:
+      case PPDeviceCalculateType.PPDeviceCalculateTypeAlternate8_3:
+      case PPDeviceCalculateType.PPDeviceCalculateTypeAlternate8_4:
+        return 'AC Eight-Electrode Algorithm';
+      // alternate8_5：当前 Harmony SDK 尚未声明该枚举值
+      case 14:
+        return 'AC Eight-Electrode Algorithm Smooth';
+      default:
+        return 'AC Four-Electrode Algorithm';
+    }
+  }
+
+  private getProduct(): number {
+    switch (this.device?.deviceCalculateType) {
+      case PPDeviceCalculateType.PPDeviceCalculateTypeAlternate8:
+        return 1;
+      case PPDeviceCalculateType.PPDeviceCalculateTypeAlternate8_0:
+        return 4;
+      case PPDeviceCalculateType.PPDeviceCalculateTypeAlternate8_1:
+        return 3;
+      case PPDeviceCalculateType.PPDeviceCalculateTypeAlternate8_2:
+        return 7;
+      case PPDeviceCalculateType.PPDeviceCalculateTypeAlternate8_3:
+        return 5;
+      case PPDeviceCalculateType.PPDeviceCalculateTypeAlternate8_4:
+        return 6;
+      // alternate8_5 is not yet declared in this Harmony SDK, but remains compatible with its numeric value.
+      case 14:
+        return 6;
+      default:
+        return -1;
+    }
+  }
+
+  private shouldShowComputingLibrary(): boolean {
+    return this.device?.deviceCalculateType !== PPDeviceCalculateType.PPDeviceCalculateTypeNeedNot;
   }
 
   onItemClick: (device: PPDeviceModel) => void = () => {
@@ -342,17 +580,4 @@ struct deviceItem {
     }
   }
 
-  /**
-   * 连接状态回调
-   * @param state
-   */
-  private getRssiColor(rssi: number): ResourceColor {
-    if (rssi >= -50) {
-      return '#4CAF50';
-    } // 强信号-绿色
-    if (rssi >= -70) {
-      return '#FFC107';
-    } // 中等信号-黄色
-    return '#F44336'; // 弱信号-红色
-  }
 }
