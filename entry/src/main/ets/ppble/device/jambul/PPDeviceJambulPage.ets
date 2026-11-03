@@ -109,7 +109,7 @@ struct PPDeviceJambulPage {
                    *
                    */
                   this.addLog('切换单位')
-                  this.deviceControl?.sendSwitchUnitDataByAdvert(PPUnitType.Unit_KG, this.deviceModel?.deviceMac ?? "FF:FF:FF:FF:FF:FF", 1)
+                  this.deviceControl?.sendCBPeripheralDataCurrentUnit(PPUnitType.Unit_KG, this.deviceModel?.deviceMac ?? "FF:FF:FF:FF:FF:FF", "38", null)
                 } else {
                   this.addLog("The device does not support dual broadcasts and unit switching.");
                 }

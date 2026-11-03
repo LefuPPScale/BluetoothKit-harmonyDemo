@@ -383,6 +383,26 @@ struct PPDeviceIcePage {
                 }
               })
 
+
+              CustomButton({
+                buttonText: '获取wifi列表',
+                onButtonClick: () => {
+                  this.addLog('获取wifi列表')
+
+
+                  this.deviceControl?.getWifiList((model,state)=>{
+
+                    model?.forEach((mm,index)=>{
+                      this.addLog(`ssid: ${mm.ssid} strength:${mm.sign}`)
+                    })
+
+
+
+                  })
+
+                }
+              })
+
             }
             .width("100%")
 
